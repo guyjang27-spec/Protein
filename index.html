@@ -26,6 +26,10 @@
         <div id="historyList" class="text-sm"></div>
         <div id="summary" class="font-bold text-blue-700 mt-2"></div>
         
+        <!-- ส่วนแสดงเป้าหมายและโปรตีนคงเหลือ -->
+        <div id="targetDisplay" class="text-sm text-gray-500 mt-1"></div>
+        <div id="remainingDisplay" class="font-bold text-red-500 mt-1"></div>
+        
         <h2 class="font-bold border-b mt-4">📅 ย้อนหลัง 7 วัน</h2>
         <div id="last7Days" class="text-sm space-y-1 text-gray-600"></div>
 
@@ -58,7 +62,14 @@
                 ).join('');
                 
                 const total = history.reduce((sum, r) => sum + parseFloat(r.protein || 0), 0);
+                
+                // คำนวณโปรตีนคงเหลือ (Target = 140)
+                const target = 140;
+                const remaining = target - total;
+                
                 document.getElementById('summary').innerText = `รวมวันนี้: ${total.toFixed(1)} g`;
+                document.getElementById('targetDisplay').innerText = `เป้าหมายต่อวัน: ${target} g`;
+                document.getElementById('remainingDisplay').innerText = `โปรตีนที่ต้องกินเพิ่ม: ${remaining > 0 ? remaining.toFixed(1) : 0} g`;
 
                 let html = '';
                 for (let i = 0; i < 7; i++) {
@@ -106,7 +117,6 @@
             fetchData();
         };
 
-        // ฟังก์ชันใหม่ที่อัปเดตแล้ว: บันทึกทั้ง 2 Sheet
         document.getElementById('addDbBtn').onclick = async () => {
             const name = document.getElementById('newFoodName').value;
             const weight = parseFloat(document.getElementById('newWeight').value);
