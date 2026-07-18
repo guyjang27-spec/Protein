@@ -12,11 +12,15 @@
             <input type="text" id="foodInput" placeholder="พิมพ์ชื่ออาหาร..." class="w-full border p-2 rounded bg-gray-50">
             <ul id="suggestionList" class="absolute z-50 w-full bg-white border shadow-lg hidden max-h-48 overflow-y-auto"></ul>
         </div>
+
+        <!-- เพิ่มช่องแสดงโปรตีนต่อ 100g -->
+        <input type="number" id="proteinPer100" placeholder="โปรตีนต่อ 100g (g)" class="w-full border p-2 rounded bg-gray-100" readonly>
+        
         <div class="grid grid-cols-2 gap-2">
-            <input type="number" id="weightInput" placeholder="ปริมาณ (กรัม/มล)" class="border p-2 rounded">
+            <input type="number" id="weightInput" placeholder="ปริมาณที่กิน (g)" class="border p-2 rounded">
             <button id="calcBtn" class="bg-blue-500 text-white rounded font-bold">คำนวณ</button>
         </div>
-        <input type="number" step="0.1" id="proteinInput" placeholder="โปรตีน (g)" class="w-full border p-2 rounded text-blue-600 font-bold">
+        <input type="number" step="0.1" id="proteinInput" placeholder="โปรตีนรวม (g)" class="w-full border p-2 rounded text-blue-600 font-bold">
         <button id="saveBtn" class="w-full bg-green-500 text-white py-3 rounded-xl font-bold">💾 บันทึก</button>
 
         <h2 class="font-bold border-b mt-4">📋 รายการวันนี้</h2>
@@ -25,23 +29,12 @@
         
         <h2 class="font-bold border-b mt-4">📅 ย้อนหลัง 7 วัน</h2>
         <div id="last7Days" class="text-sm space-y-1 text-gray-600"></div>
-
-        <div class="mt-8 p-4 bg-gray-100 rounded-xl">
-            <h3 class="font-bold text-gray-700">➕ เพิ่มอาหารใหม่ลง DB</h3>
-            <input type="text" id="newFoodName" placeholder="ชื่ออาหาร" class="w-full border p-2 mt-2 rounded">
-            <div class="grid grid-cols-2 gap-2 mt-2">
-                <input type="number" id="newWeight" placeholder="ปริมาณที่กิน (g)" class="border p-2 rounded">
-                <input type="number" id="newProtein" placeholder="โปรตีนที่ได้ (g)" class="border p-2 rounded">
-            </div>
-            <button id="addDbBtn" class="w-full bg-purple-500 text-white py-2 mt-2 rounded font-bold">คำนวณและเพิ่มลง DB</button>
-        </div>
     </div>
 
-<script>
+    <script>
         const URL = "https://script.google.com/macros/s/AKfycbzAax5FyBhIuy8HmaEjxRALlMEuTeWTHT3ROcIKGqsmBOwRcsJYTgT1fmqVRHK-eoop7A/exec";
         let proteinDB = [];
 
-        // ฟังก์ชันดึงข้อมูลหลัก
         async function fetchData() {
             try {
                 const res = await fetch(URL);
@@ -49,9 +42,8 @@
                 proteinDB = d.db;
                 
                 const selectedDate = document.getElementById('dateInput').value;
-                
-                // 1. กรองและแสดงรายการวันนี้
                 const history = d.records.filter(r => String(r.date).trim() === selectedDate);
+                
                 document.getElementById('historyList').innerHTML = history.map(r => 
                     `<div class="flex justify-between border-b py-1"><span>${r.foodName}</span><span>+${parseFloat(r.protein || 0).toFixed(1)}g</span></div>`
                 ).join('');
@@ -59,53 +51,41 @@
                 const total = history.reduce((sum, r) => sum + parseFloat(r.protein || 0), 0);
                 document.getElementById('summary').innerText = `รวมวันนี้: ${total.toFixed(1)} g`;
 
-                // 2. แสดงรายการย้อนหลัง 7 วัน (ตรงนี้ครับที่ต้องเรียกใช้)
                 let html = '';
                 for (let i = 0; i < 7; i++) {
-                    const dObj = new Date(); 
-                    dObj.setDate(dObj.getDate() - i); 
+                    const dObj = new Date(); dObj.setDate(dObj.getDate() - i); 
                     const dStr = dObj.toISOString().split('T')[0];
-                    
-                    // รวมโปรตีนรายวัน
-                    const dailyTotal = d.records
-                        .filter(r => String(r.date).trim() === dStr)
-                        .reduce((sum, r) => sum + parseFloat(r.protein || 0), 0);
-                        
+                    const dailyTotal = d.records.filter(r => String(r.date).trim() === dStr).reduce((sum, r) => sum + parseFloat(r.protein || 0), 0);
                     html += `<div class="flex justify-between py-1 border-b text-gray-700"><span>${dStr}</span><span>${dailyTotal.toFixed(1)}g</span></div>`;
                 }
                 document.getElementById('last7Days').innerHTML = html;
-
-            } catch (err) { console.error("Error:", err); }
+            } catch (err) { console.error(err); }
         }
-        // --- ระบบ Autocomplete ใหม่ ---
+
         document.getElementById('foodInput').oninput = function() {
             const val = this.value.toLowerCase();
             const list = document.getElementById('suggestionList');
-            if (!val) { list.classList.add('hidden'); return; }
-            
             const filtered = proteinDB.filter(item => item.name.toLowerCase().includes(val));
             list.innerHTML = filtered.map(item => `<li class="p-2 cursor-pointer hover:bg-blue-100">${item.name}</li>`).join('');
-            list.classList.toggle('hidden', filtered.length === 0);
+            list.classList.toggle('hidden', filtered.length === 0 || !val);
         };
 
-        // เมื่อคลิกเลือกจากรายการ
         document.getElementById('suggestionList').onclick = function(e) {
-            document.getElementById('foodInput').value = e.target.innerText;
+            const name = e.target.innerText;
+            document.getElementById('foodInput').value = name;
             this.classList.add('hidden');
+            const item = proteinDB.find(i => i.name === name);
+            if(item) document.getElementById('proteinPer100').value = item.value;
         };
 
-        // ฟังก์ชันคำนวณ
         document.getElementById('calcBtn').onclick = () => {
-            const name = document.getElementById('foodInput').value;
-            const item = proteinDB.find(i => i.name === name);
-            if(item) {
-                const weight = document.getElementById('weightInput').value;
-                document.getElementById('proteinInput').value = ((item.value * weight) / 100).toFixed(1);
-            } else { alert("ไม่พบอาหารในฐานข้อมูล"); }
+            const p100 = parseFloat(document.getElementById('proteinPer100').value);
+            const weight = parseFloat(document.getElementById('weightInput').value);
+            if(p100 && weight) document.getElementById('proteinInput').value = ((p100 * weight) / 100).toFixed(1);
         };
-        
-        // ... (โค้ดส่วนที่เหลือ)
+
         document.getElementById('dateInput').valueAsDate = new Date();
+        document.getElementById('dateInput').onchange = fetchData;
         fetchData();
     </script>
 </body>
