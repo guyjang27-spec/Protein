@@ -8,7 +8,6 @@
 <body class="bg-gray-50 p-4 flex justify-center">
     <div class="w-full max-w-md bg-white p-6 rounded-2xl shadow-lg space-y-4">
         <h1 class="text-xl font-bold text-center text-blue-600">🥩 AI Protein Tracker</h1>
-        
         <input type="date" id="dateInput" class="w-full border p-2 rounded bg-gray-50">
         
         <div class="grid grid-cols-2 gap-2 text-center">
@@ -21,86 +20,54 @@
                 <input type="text" id="remainingInput" class="w-full border p-2 rounded bg-orange-50 text-orange-600 font-bold text-center" readonly>
             </div>
         </div>
-
         <input type="text" id="foodInput" placeholder="ชื่ออาหาร" class="w-full border p-2 rounded bg-gray-50">
-        
         <div class="grid grid-cols-3 gap-2">
             <input type="number" id="weightInput" placeholder="ปริมาณ" class="border p-2 rounded bg-gray-50">
-            <select id="unitInput" class="border p-2 rounded bg-gray-50">
-                <option value="g">g</option>
-                <option value="ml">ml</option>
-            </select>
+            <select id="unitInput" class="border p-2 rounded bg-gray-50"><option value="g">g</option><option value="ml">ml</option></select>
             <button id="aiBtn" class="bg-blue-500 text-white rounded hover:bg-blue-600 font-bold">วิเคราะห์</button>
         </div>
-        
         <input type="number" step="0.1" id="proteinInput" placeholder="โปรตีน (g)" class="w-full border p-2 rounded font-bold text-blue-600 bg-blue-50">
-        
         <button id="saveBtn" class="w-full bg-green-500 text-white py-3 rounded-xl font-bold hover:bg-green-600">💾 บันทึก</button>
-
         <h2 class="font-bold border-b mt-4">📋 รายการวันนี้</h2>
         <div id="historyList" class="text-sm"></div>
         <div id="summary" class="font-bold text-blue-700 mt-2"></div>
-
         <h2 class="font-bold border-b mt-4">📅 ย้อนหลัง 7 วัน</h2>
         <div id="last7Days" class="text-sm space-y-1 text-gray-600"></div>
     </div>
-
     <script>
-        // เปลี่ยน URL นี้ให้เป็น URL ของพี่ที่ได้จากขั้นตอน Deploy
         const URL = "https://script.google.com/macros/s/AKfycbzAax5FyBhIuy8HmaEjxRALlMEuTeWTHT3ROcIKGqsmBOwRcsJYTgT1fmqVRHK-eoop7A/exec";
         document.getElementById('dateInput').valueAsDate = new Date();
-
         document.getElementById('aiBtn').onclick = async () => {
             const btn = document.getElementById('aiBtn');
-            const food = document.getElementById('foodInput').value;
-            const weight = document.getElementById('weightInput').value + document.getElementById('unitInput').value;
-            if(!food || !weight) return alert("กรุณากรอกข้อมูลอาหารและปริมาณ");
-
             btn.innerText = "⏳..."; btn.disabled = true;
             try {
-                const res = await fetch(`${URL}?action=ai&food=${encodeURIComponent(food)}&weight=${encodeURIComponent(weight)}`);
+                const res = await fetch(`${URL}?action=ai&food=${encodeURIComponent(document.getElementById('foodInput').value)}&weight=${encodeURIComponent(document.getElementById('weightInput').value + document.getElementById('unitInput').value)}`);
                 const data = await res.json();
                 if (data.error) alert("⚠️ ปัญหาจาก AI: " + data.error);
                 else document.getElementById('proteinInput').value = data;
-            } catch (err) { alert("เกิดข้อผิดพลาดในการเชื่อมต่อ"); } finally {
-                btn.innerText = "วิเคราะห์"; btn.disabled = false;
-            }
+            } catch (err) { alert("เกิดข้อผิดพลาด"); } finally { btn.innerText = "วิเคราะห์"; btn.disabled = false; }
         };
-
         document.getElementById('saveBtn').onclick = async () => {
-            await fetch(URL, { method: "POST", body: JSON.stringify({ 
-                date: document.getElementById('dateInput').value,
-                foodName: document.getElementById('foodInput').value,
-                weight: document.getElementById('weightInput').value,
-                unit: document.getElementById('unitInput').value,
-                protein: document.getElementById('proteinInput').value,
-                target: document.getElementById('targetInput').value
-            })});
+            await fetch(URL, { method: "POST", body: JSON.stringify({ date: document.getElementById('dateInput').value, foodName: document.getElementById('foodInput').value, weight: document.getElementById('weightInput').value, unit: document.getElementById('unitInput').value, protein: document.getElementById('proteinInput').value, target: document.getElementById('targetInput').value }) });
             fetchData();
         };
-
         async function fetchData() {
-            const res = await fetch(URL);
-            const d = await res.json();
+            const res = await fetch(URL); const d = await res.json();
             document.getElementById('targetInput').value = d.target;
             const history = d.records.filter(r => r.date === document.getElementById('dateInput').value);
             document.getElementById('historyList').innerHTML = history.map(r => `<div class="flex justify-between border-b py-1"><span>${r.foodName}</span><span>+${parseFloat(r.protein).toFixed(1)}g</span></div>`).join('');
             const total = history.reduce((sum, r) => sum + parseFloat(r.protein), 0);
             document.getElementById('summary').innerText = `รวมวันนี้: ${total.toFixed(1)} / ${d.target} g`;
             document.getElementById('remainingInput').value = Math.max(0, d.target - total).toFixed(1) + " g";
-            
             let html = '';
             for (let i = 0; i < 7; i++) {
-                const dObj = new Date(); dObj.setDate(dObj.getDate() - i);
-                const dStr = dObj.toISOString().split('T')[0];
+                const dObj = new Date(); dObj.setDate(dObj.getDate() - i); const dStr = dObj.toISOString().split('T')[0];
                 const dailyTotal = d.records.filter(r => r.date === dStr).reduce((sum, r) => sum + parseFloat(r.protein), 0);
                 html += `<div class="flex justify-between py-1 border-b text-gray-500"><span>${dStr}</span><span>${dailyTotal.toFixed(1)}g</span></div>`;
             }
             document.getElementById('last7Days').innerHTML = html;
         }
-        document.getElementById('dateInput').onchange = fetchData;
-        document.getElementById('targetInput').onchange = fetchData;
-        fetchData();
+        document.getElementById('dateInput').onchange = fetchData; document.getElementById('targetInput').onchange = fetchData; fetchData();
     </script>
 </body>
 </html>
