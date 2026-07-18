@@ -12,14 +12,11 @@
         
         <form id="trackerForm" class="space-y-4">
             <input type="date" id="dateInput" class="w-full rounded-lg border-gray-300 p-2 bg-gray-50 border" required>
-            
             <div class="grid grid-cols-2 gap-4">
                 <input type="number" id="targetInput" value="140" class="w-full rounded-lg border-gray-300 p-2 bg-gray-50 border" required>
-                <input type="text" id="remainingInput" value="140" class="w-full rounded-lg border-gray-300 p-2 bg-gray-50 border font-bold" readonly>
+                <input type="text" id="remainingInput" value="140 g" class="w-full rounded-lg border-gray-300 p-2 bg-gray-50 border font-bold text-center" readonly>
             </div>
-
             <input type="text" id="foodInput" placeholder="เช่น อกไก่ต้ม" class="w-full rounded-lg border-gray-300 p-2 bg-gray-50 border" required>
-            
             <div class="space-y-2">
                 <input type="number" step="0.1" id="weightInput" placeholder="ปริมาณอาหาร (g/ml)" class="w-full rounded-lg border-gray-300 p-2 bg-gray-50 border">
                 <button type="button" id="calcBtn" class="w-full bg-blue-500 text-white p-2 rounded-lg font-semibold hover:bg-blue-600">วิเคราะห์ด้วย AI</button>
@@ -27,42 +24,53 @@
 
             <div id="resultBox" class="hidden p-4 bg-blue-50 rounded-xl border border-blue-200">
                 <p class="text-3xl font-bold text-blue-600 text-center"><span id="calculatedProtein">0</span> g</p>
-                <p id="ratioText" class="text-xs text-blue-500 text-center font-bold">✨ วิเคราะห์โดย Gemini AI</p>
+                <p class="text-xs text-blue-500 text-center font-bold">✨ วิเคราะห์โดย Gemini AI</p>
             </div>
 
-            <button type="submit" id="submitBtn" class="w-full bg-green-500 text-white p-3 rounded-xl font-bold hover:bg-green-600">บันทึกมื้ออาหาร</button>
+            <button type="submit" id="submitBtn" class="w-full bg-green-500 text-white p-3 rounded-xl font-bold hover:bg-green-600">💾 บันทึกมื้ออาหาร</button>
         </form>
+
+        <hr>
+        <h2 class="font-bold text-gray-700">📋 รายการกินวันนี้</h2>
+        <div id="historyList" class="space-y-2 max-h-40 overflow-y-auto text-sm"></div>
     </div>
 
     <script>
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzAax5FyBhIuy8HmaEjxRALlMEuTeWTHT3ROcIKGqsmBOwRcsJYTgT1fmqVRHK-eoop7A/exec";
         document.getElementById('dateInput').valueAsDate = new Date();
 
-        // ปุ่มวิเคราะห์ AI
+        async function fetchHistory() {
+            const res = await fetch(GOOGLE_SCRIPT_URL);
+            const data = await res.json();
+            const today = document.getElementById('dateInput').value;
+            const list = document.getElementById('historyList');
+            const filtered = data.records.filter(r => r.date === today);
+            
+            list.innerHTML = filtered.map(r => `
+                <div class="flex justify-between p-2 bg-gray-50 rounded">
+                    <span>${r.foodName} (${r.weight}${r.unit})</span>
+                    <span class="font-bold text-green-600">+${r.protein}g</span>
+                </div>
+            `).join('');
+
+            const total = filtered.reduce((sum, r) => sum + parseFloat(r.protein), 0);
+            document.getElementById('remainingInput').value = (140 - total).toFixed(1) + " g";
+        }
+
         document.getElementById('calcBtn').addEventListener('click', async () => {
             const food = document.getElementById('foodInput').value;
             const weight = document.getElementById('weightInput').value;
             const btn = document.getElementById('calcBtn');
-            
-            if(!food || !weight) return alert("กรุณากรอกข้อมูลให้ครบ");
-            
             btn.innerText = "🤖 AI กำลังวิเคราะห์...";
             btn.disabled = true;
-            
-            try {
-                const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=ai&food=${encodeURIComponent(food)}&weight=${weight}`);
-                const protein = await response.json();
-                document.getElementById('calculatedProtein').innerText = protein;
-                document.getElementById('resultBox').classList.remove('hidden');
-            } catch (e) {
-                alert("เกิดข้อผิดพลาดในการติดต่อ AI");
-            } finally {
-                btn.innerText = "วิเคราะห์ด้วย AI";
-                btn.disabled = false;
-            }
+            const res = await fetch(`${GOOGLE_SCRIPT_URL}?action=ai&food=${encodeURIComponent(food)}&weight=${weight}`);
+            const protein = await res.json();
+            document.getElementById('calculatedProtein').innerText = protein;
+            document.getElementById('resultBox').classList.remove('hidden');
+            btn.innerText = "วิเคราะห์ด้วย AI";
+            btn.disabled = false;
         });
 
-        // ปุ่มบันทึก
         document.getElementById('trackerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const data = {
@@ -72,8 +80,11 @@
                 weight: document.getElementById('weightInput').value
             };
             await fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify(data) });
-            alert("บันทึกข้อมูลเรียบร้อยแล้ว!");
+            alert("บันทึกแล้ว!");
+            fetchHistory();
         });
+
+        fetchHistory();
     </script>
 </body>
 </html>
