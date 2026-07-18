@@ -71,8 +71,17 @@
                 
                 document.getElementById('summary').innerText = `รวมวันนี้: ${total.toFixed(1)} g`;
                 document.getElementById('targetDisplay').innerText = `เป้าหมายต่อวัน: ${target} g`;
-                document.getElementById('remainingDisplay').innerText = `โปรตีนที่ต้องกินเพิ่ม: ${remaining > 0 ? remaining.toFixed(1) : 0} g`;
-
+    // แทนที่บรรทัดเดิมด้วยโค้ดนี้ครับ
+if (remaining > 0) {
+    document.getElementById('remainingDisplay').className = "font-bold text-red-500 mt-1";
+    document.getElementById('remainingDisplay').innerText = `โปรตีนที่ต้องกินเพิ่ม: ${remaining.toFixed(1)} g`;
+} else if (remaining === 0) {
+    document.getElementById('remainingDisplay').className = "font-bold text-green-600 mt-1";
+    document.getElementById('remainingDisplay').innerText = `กินครบเป้าหมายแล้ว!`;
+} else {
+    document.getElementById('remainingDisplay').className = "font-bold text-blue-600 mt-1";
+    document.getElementById('remainingDisplay').innerText = `กินเกินเป้าหมายไปแล้ว: ${Math.abs(remaining).toFixed(1)} g`;
+}
                 let html = '';
                 for (let i = 0; i < 7; i++) {
                     const dObj = new Date(); dObj.setDate(dObj.getDate() - i); 
