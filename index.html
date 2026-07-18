@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Protein Tracker (Daily Cloud v2 - Fixed)</title>
+    <title>AI Protein Tracker (Daily Cloud v2.1 - Analytics)</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-50 min-h-screen text-gray-800 flex flex-col items-center p-4">
@@ -92,11 +92,21 @@
         <!-- รายการที่บันทึกของวันที่เลือก -->
         <div>
             <div class="flex justify-between items-center mb-3">
-                <h2 class="text-base font-bold text-gray-700">📋 ประวัติการกิน <span class="text-blue-600 text-sm" id="selectedDateLabel"></span></h2>
+                <h2 class="text-base font-bold text-gray-700">📋 รายการกินวันนี้ <span class="text-blue-600 text-sm" id="selectedDateLabel"></span></h2>
                 <button id="refreshBtn" class="text-xs text-blue-500 hover:text-blue-700 font-semibold">🔄 ดึงข้อมูลใหม่</button>
             </div>
-            <div id="historyList" class="space-y-2 max-h-60 overflow-y-auto">
+            <div id="historyList" class="space-y-2 max-h-48 overflow-y-auto mb-4">
                 <p class="text-sm text-gray-400 text-center py-4">กำลังโหลดข้อมูลจาก Google Sheets...</p>
+            </div>
+        </div>
+
+        <hr class="border-gray-200">
+
+        <!-- 📊 ส่วนที่เพิ่มใหม่: สรุปยอดโปรตีนรวมในแต่ละวัน -->
+        <div>
+            <h2 class="text-base font-bold text-gray-700 mb-3">📊 สรุปยอดโปรตีนรวมแยกตามวัน</h2>
+            <div id="dailySummaryList" class="space-y-2 max-h-48 overflow-y-auto">
+                <p class="text-sm text-gray-400 text-center py-2">ไม่มีข้อมูลสรุป</p>
             </div>
         </div>
     </div>
@@ -119,7 +129,6 @@
         ];
         const defaultRatio = 0.20;
 
-        // แก้ไขรหัสตัวอักษรลิงก์ URL ถูกต้องตรงเป๊ะ 100% แล้วครับพี่
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzAax5FyBhIuy8HmaEjxRALlMEuTeWTHT3ROcIKGqsmBOwRcsJYTgT1fmqVRHK-eoop7A/exec";
 
         document.getElementById('dateInput').valueAsDate = new Date();
@@ -153,7 +162,6 @@
             document.getElementById('weightInput').placeholder = "กรอกปริมาตร เช่น 250.0";
         });
 
-        // ใช้กลไก JSONP เพื่อแก้ปัญหาโดน CORS บล็อกหน้าเว็บ
         function fetchRecordsFromCloud() {
             const statusLabel = document.getElementById('syncStatus');
             statusLabel.innerText = "⏳ กำลังดึงข้อมูลจาก Cloud...";
@@ -169,8 +177,6 @@
                     allRecords = data.records;
                     if (data.targetValue) {
                         targetInput.value = data.targetValue;
-                    } else {
-                        targetInput.value = "140";
                     }
                 }
                 
@@ -178,6 +184,7 @@
                 statusLabel.className = "inline-block mt-2 px-2 py-0.5 text-[10px] font-semibold bg-green-100 text-green-800 rounded-full";
                 
                 filterAndRenderByDate();
+                renderDailySummary(); // เรียกคำนวณสรุปยอดรายวัน
                 
                 delete window[callbackName];
                 document.getElementById(callbackName).remove();
@@ -238,8 +245,58 @@
             }).join('');
         }
 
+        // ฟังก์ชันคำนวณกลุ่มข้อมูลและแสดงผลสรุปยอดโปรตีนแยกรายวัน
+        function renderDailySummary() {
+            const summaryList = document.getElementById('dailySummaryList');
+            const target = parseFloat(document.getElementById('targetInput').value) || 140;
+
+            if (allRecords.length === 0) {
+                summaryList.innerHTML = `<p class="text-sm text-gray-400 text-center py-4">📊 ยังไม่มีข้อมูลบันทึกในระบบ</p>`;
+                return;
+            }
+
+            // จัดกลุ่มข้อมูลแยกตามวันที่
+            const summaryMap = {};
+            allRecords.forEach(record => {
+                if (!summaryMap[record.date]) {
+                    summaryMap[record.date] = 0;
+                }
+                summaryMap[record.date] += parseFloat(record.protein);
+            });
+
+            // แปลงเป็น Array และเรียงลำดับจากวันที่ล่าสุดขึ้นก่อน
+            const sortedDates = Object.keys(summaryMap).sort().reverse();
+
+            summaryList.innerHTML = sortedDates.map(date => {
+                const totalProtein = Math.round(summaryMap[date] * 10) / 10;
+                const isSuccess = totalProtein >= target;
+                
+                // ตกแต่งสีสรรตามสถานะการกินถึงเป้าหรือไม่
+                const badgeColor = isSuccess 
+                    ? "bg-green-100 text-green-800 border-green-200" 
+                    : "bg-amber-100 text-amber-800 border-amber-200";
+                
+                const statusText = isSuccess ? "🎯 ถึงเป้าหมาย" : `ขาดอีก ${(target - totalProtein).toFixed(1)}g`;
+
+                return `
+                    <div class="flex justify-between items-center p-3 rounded-xl border text-sm ${badgeColor}">
+                        <div>
+                            <span class="font-bold block">${date}</span>
+                            <span class="text-xs opacity-80">${statusText} (เป้าหมาย ${target}g)</span>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-lg font-black">${totalProtein.toFixed(1)} / ${target} g</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
         dateInput.addEventListener('change', filterAndRenderByDate);
-        document.getElementById('targetInput').addEventListener('input', filterAndRenderByDate);
+        document.getElementById('targetInput').addEventListener('input', () => {
+            filterAndRenderByDate();
+            renderDailySummary();
+        });
         document.getElementById('refreshBtn').addEventListener('click', fetchRecordsFromCloud);
 
         toggleBtn.addEventListener('change', (e) => {
@@ -323,7 +380,6 @@
                 submitBtn.disabled = true;
                 btnText.innerText = "⏳ กำลังเซฟข้อมูลลง Cloud...";
 
-                // ปรับส่งโพสต์ข้อมูลแบบ no-cors เพื่อเลี่ยงปัญหาระบบล็อกความปลอดภัยเบราว์เซอร์
                 await fetch(GOOGLE_SCRIPT_URL, {
                     method: "POST",
                     mode: "no-cors",
@@ -331,7 +387,6 @@
                     body: JSON.stringify(newRecord)
                 });
 
-                // หน่วงเวลา 1 วินาที เพื่อรอให้ข้อมูลบันทึกลงแผ่นงานเรียบร้อยแล้วดึงขึ้นมาใหม่
                 setTimeout(() => {
                     fetchRecordsFromCloud();
                     document.getElementById('foodInput').value = '';
