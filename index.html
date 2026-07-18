@@ -46,18 +46,23 @@
     </div>
 
     <script>
+        // เปลี่ยน URL นี้ให้เป็น URL ของพี่ที่ได้จากขั้นตอน Deploy
         const URL = "https://script.google.com/macros/s/AKfycbzAax5FyBhIuy8HmaEjxRALlMEuTeWTHT3ROcIKGqsmBOwRcsJYTgT1fmqVRHK-eoop7A/exec";
         document.getElementById('dateInput').valueAsDate = new Date();
 
         document.getElementById('aiBtn').onclick = async () => {
             const btn = document.getElementById('aiBtn');
+            const food = document.getElementById('foodInput').value;
+            const weight = document.getElementById('weightInput').value + document.getElementById('unitInput').value;
+            if(!food || !weight) return alert("กรุณากรอกข้อมูลอาหารและปริมาณ");
+
             btn.innerText = "⏳..."; btn.disabled = true;
             try {
-                const res = await fetch(`${URL}?action=ai&food=${encodeURIComponent(document.getElementById('foodInput').value)}&weight=${encodeURIComponent(document.getElementById('weightInput').value + document.getElementById('unitInput').value)}`);
+                const res = await fetch(`${URL}?action=ai&food=${encodeURIComponent(food)}&weight=${encodeURIComponent(weight)}`);
                 const data = await res.json();
                 if (data.error) alert("⚠️ ปัญหาจาก AI: " + data.error);
                 else document.getElementById('proteinInput').value = data;
-            } catch (err) { alert("เกิดข้อผิดพลาด"); } finally {
+            } catch (err) { alert("เกิดข้อผิดพลาดในการเชื่อมต่อ"); } finally {
                 btn.innerText = "วิเคราะห์"; btn.disabled = false;
             }
         };
