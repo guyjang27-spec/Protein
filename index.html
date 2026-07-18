@@ -7,6 +7,10 @@
     <div class="w-full max-w-md bg-white p-6 rounded-2xl shadow-lg space-y-4">
         <h1 class="text-xl font-bold text-center text-blue-600">🥩 Protein Tracker Pro</h1>
         <input type="date" id="dateInput" class="w-full border p-2 rounded">
+
+                <!-- ส่วนแสดงเป้าหมายและโปรตีนคงเหลือ -->
+        <div id="targetDisplay" class="text-sm text-gray-500 mt-1"></div>
+        <div id="remainingDisplay" class="font-bold text-red-500 mt-1"></div>
         
         <div class="relative">
             <input type="text" id="foodInput" placeholder="พิมพ์ชื่ออาหาร..." class="w-full border p-2 rounded bg-gray-50">
@@ -26,9 +30,7 @@
         <div id="historyList" class="text-sm"></div>
         <div id="summary" class="font-bold text-blue-700 mt-2"></div>
         
-        <!-- ส่วนแสดงเป้าหมายและโปรตีนคงเหลือ -->
-        <div id="targetDisplay" class="text-sm text-gray-500 mt-1"></div>
-        <div id="remainingDisplay" class="font-bold text-red-500 mt-1"></div>
+
         
         <h2 class="font-bold border-b mt-4">📅 ย้อนหลัง 7 วัน</h2>
         <div id="last7Days" class="text-sm space-y-1 text-gray-600"></div>
