@@ -42,36 +42,27 @@
         let proteinDB = [];
 
         async function fetchData() {
-            try {
-                const res = await fetch(URL);
-                const d = await res.json();
-                
-                // --- เพิ่มบรรทัดนี้ไว้เช็ค ---
-                console.log("ข้อมูลที่ได้รับจาก Google:", d);
-                // --------------------------
-                
-                proteinDB = d.db;
-                
-                const selectedDate = document.getElementById('dateInput').value; // วันที่ใน input
-                console.log("วันที่เลือก:", selectedDate);
-                
-                // กรองข้อมูล: ถ้าวันที่ตรงกัน
-                const history = d.records.filter(r => String(r.date).trim() === String(selectedDate).trim());
-                console.log("รายการที่กรองได้:", history);
-
-                document.getElementById('historyList').innerHTML = history.map(r => 
-                    `<div class="flex justify-between border-b py-1"><span>${r.foodName}</span><span>+${parseFloat(r.protein || 0).toFixed(1)}g</span></div>`
-                ).join('');
-                
-                const total = history.reduce((sum, r) => sum + parseFloat(r.protein || 0), 0);
-                document.getElementById('summary').innerText = `รวมวันนี้: ${total.toFixed(1)} g`;
-
-                // ... (ส่วนที่เหลือคงเดิม)
-                fetchDataUI(d);
-            } catch (err) {
-                console.error("Error:", err);
-            }
-        }
+    try {
+        const res = await fetch(URL);
+        const d = await res.json();
+        proteinDB = d.db;
+        
+        // รับค่าจาก input date (เช่น '2026-07-18')
+        const selectedDate = document.getElementById('dateInput').value; 
+        
+        // เปรียบเทียบแบบ String ตรงๆ
+        const history = d.records.filter(r => String(r.date) === selectedDate);
+        
+        document.getElementById('historyList').innerHTML = history.map(r => 
+            `<div class="flex justify-between border-b py-1"><span>${r.foodName}</span><span>+${parseFloat(r.protein || 0).toFixed(1)}g</span></div>`
+        ).join('');
+        
+        // ... (ส่วนที่เหลือคงเดิม)
+        fetchDataUI(d);
+    } catch (err) {
+        console.error("Error:", err);
+    }
+}
 
         function fetchDataUI(d) {
             let html = '';
