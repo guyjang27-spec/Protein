@@ -2,33 +2,36 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Protein Tracker</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-50 min-h-screen p-4 flex justify-center">
+<body class="bg-gray-50 p-4 flex justify-center">
     <div class="w-full max-w-md bg-white rounded-2xl shadow-lg p-6 space-y-4">
         <h1 class="text-xl font-bold text-center">🥩 AI Protein Tracker</h1>
         
         <input type="date" id="dateInput" class="w-full border p-2 rounded">
-        <div class="grid grid-cols-2 gap-2">
-            <input type="number" id="targetInput" value="140" class="border p-2 rounded" placeholder="เป้าหมาย">
-            <input type="text" id="remainingInput" class="border p-2 rounded font-bold text-center" readonly>
+        <div class="grid grid-cols-2 gap-2 text-center">
+            <div class="border p-2 rounded bg-gray-100 font-bold" id="targetDisplay">140</div>
+            <div class="border p-2 rounded bg-blue-50 font-bold text-blue-600" id="remainingDisplay">140 g</div>
         </div>
 
         <input type="text" id="foodInput" placeholder="ชื่ออาหาร" class="w-full border p-2 rounded">
+        
         <div class="flex items-center gap-2"><input type="checkbox" id="manualToggle"> <label class="text-sm">ระบุโปรตีนเอง</label></div>
         
-        <div id="calcSection" class="flex gap-2"><input type="number" id="weightInput" placeholder="ปริมาณ" class="w-full border p-2 rounded"><button id="calcBtn" class="bg-blue-500 text-white px-4 py-2 rounded">AI วิเคราะห์</button></div>
-        <div id="manualSection" class="hidden"><input type="number" id="manualProtein" placeholder="โปรตีน (g)" class="w-full border p-2 rounded"></div>
+        <div id="calcSection" class="flex gap-2">
+            <input type="number" id="weightInput" placeholder="ปริมาณ" class="w-full border p-2 rounded">
+            <select id="unitInput" class="border p-2 rounded"><option value="g">g</option><option value="ml">ml</option></select>
+            <button id="calcBtn" class="bg-blue-500 text-white px-4 py-2 rounded">AI</button>
+        </div>
+        <div id="manualSection" class="hidden"><input type="number" id="manualProtein" placeholder="ระบุโปรตีน (g)" class="w-full border p-2 rounded"></div>
         
-        <div id="resultBox" class="hidden bg-blue-50 p-2 text-center font-bold text-blue-700">โปรตีน: <span id="calculatedProtein">0</span> g</div>
         <button id="saveBtn" class="w-full bg-green-500 text-white py-3 rounded-xl font-bold">💾 บันทึก</button>
 
         <h2 class="font-bold border-b mt-4">📋 รายการวันนี้</h2>
         <div id="historyList" class="text-sm space-y-1"></div>
         <h2 class="font-bold border-b mt-4">📊 สรุปยอดรวม</h2>
-        <div id="summaryList" class="text-sm text-gray-600"></div>
+        <div id="summaryDisplay" class="font-bold text-lg"></div>
     </div>
 
     <script>
@@ -43,13 +46,14 @@
         document.getElementById('calcBtn').onclick = async () => {
             const res = await fetch(`${URL}?action=ai&food=${document.getElementById('foodInput').value}&weight=${document.getElementById('weightInput').value}`);
             const p = await res.json();
-            document.getElementById('calculatedProtein').innerText = p;
-            document.getElementById('resultBox').classList.remove('hidden');
+            document.getElementById('manualToggle').checked = true;
+            document.getElementById('manualSection').classList.remove('hidden');
+            document.getElementById('calcSection').classList.add('hidden');
+            document.getElementById('manualProtein').value = p;
         };
 
         document.getElementById('saveBtn').onclick = async () => {
-            const manual = document.getElementById('manualToggle').checked;
-            const data = { date: document.getElementById('dateInput').value, foodName: document.getElementById('foodInput').value, protein: manual ? document.getElementById('manualProtein').value : document.getElementById('calculatedProtein').innerText };
+            const data = { date: document.getElementById('dateInput').value, foodName: document.getElementById('foodInput').value, protein: document.getElementById('manualProtein').value, unit: document.getElementById('unitInput').value };
             await fetch(URL, { method: "POST", body: JSON.stringify(data) });
             fetchData();
         };
@@ -57,14 +61,15 @@
         async function fetchData() {
             const res = await fetch(URL);
             const d = await res.json();
-            const today = document.getElementById('dateInput').value;
-            const history = d.records.filter(r => r.date === today);
+            const dateVal = document.getElementById('dateInput').value;
+            const history = d.records.filter(r => r.date === dateVal);
             document.getElementById('historyList').innerHTML = history.map(r => `<div class="flex justify-between"><span>${r.foodName}</span><span>+${r.protein}g</span></div>`).join('');
-            
             const total = history.reduce((sum, r) => sum + parseFloat(r.protein), 0);
-            document.getElementById('remainingInput').value = (d.targetValue - total).toFixed(1) + " g";
-            document.getElementById('summaryList').innerHTML = `รวมวันนี้: ${total.toFixed(1)} g / ${d.targetValue} g`;
+            document.getElementById('remainingDisplay').innerText = (d.targetValue - total).toFixed(1) + " g";
+            document.getElementById('summaryDisplay').innerText = `รวมวันนี้: ${total.toFixed(1)} g / ${d.targetValue} g`;
         }
+
+        document.getElementById('dateInput').onchange = fetchData;
         fetchData();
     </script>
 </body>
