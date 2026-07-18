@@ -1,5 +1,10 @@
 <!DOCTYPE html>
 <html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <title>AI Protein Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
 <body class="bg-gray-50 p-4 flex justify-center">
     <div class="w-full max-w-md bg-white p-6 rounded-2xl shadow-lg space-y-4">
         <h1 class="text-xl font-bold text-center">🥩 AI Protein Tracker</h1>
@@ -13,19 +18,28 @@
         </div>
         
         <button id="saveBtn" class="w-full bg-green-500 text-white py-3 rounded-xl font-bold">💾 บันทึก</button>
-        <h2 class="font-bold border-b mt-4">📋 รายการวันนี้</h2>
+
+        <h2 class="font-bold border-b mt-4">📋 รายการวันที่เลือก</h2>
         <div id="historyList" class="text-sm"></div>
-        <div id="summary" class="font-bold mt-2"></div>
+        <div id="summary" class="font-bold text-blue-700"></div>
+
+        <h2 class="font-bold border-b mt-4">📅 สรุปโปรตีนย้อนหลัง 7 วัน</h2>
+        <div id="last7Days" class="text-sm space-y-1 text-gray-600"></div>
     </div>
 
     <script>
         const URL = "https://script.google.com/macros/s/AKfycbzAax5FyBhIuy8HmaEjxRALlMEuTeWTHT3ROcIKGqsmBOwRcsJYTgT1fmqVRHK-eoop7A/exec";
         document.getElementById('dateInput').valueAsDate = new Date();
 
-        // AI วิเคราะห์แล้วใส่ค่าในช่องโปรตีน
         document.getElementById('aiBtn').onclick = async () => {
-            const res = await fetch(`${URL}?action=ai&food=${document.getElementById('foodInput').value}&weight=${document.getElementById('weightInput').value}`);
-            document.getElementById('proteinInput').value = await res.json();
+            const btn = document.getElementById('aiBtn');
+            btn.innerText = "⏳..."; btn.disabled = true; btn.classList.replace('bg-blue-500', 'bg-gray-400');
+            try {
+                const res = await fetch(`${URL}?action=ai&food=${document.getElementById('foodInput').value}&weight=${document.getElementById('weightInput').value}`);
+                document.getElementById('proteinInput').value = await res.json();
+            } catch (err) { alert("เกิดข้อผิดพลาด"); } finally {
+                btn.innerText = "AI"; btn.disabled = false; btn.classList.replace('bg-gray-400', 'bg-blue-500');
+            }
         };
 
         document.getElementById('saveBtn').onclick = async () => {
@@ -42,10 +56,21 @@
             const res = await fetch(URL);
             const d = await res.json();
             const dateVal = document.getElementById('dateInput').value;
+            
             const history = d.records.filter(r => r.date === dateVal);
             document.getElementById('historyList').innerHTML = history.map(r => `<div class="flex justify-between"><span>${r.foodName}</span><span>+${r.protein}g</span></div>`).join('');
             const total = history.reduce((sum, r) => sum + parseFloat(r.protein), 0);
-            document.getElementById('summary').innerText = `รวมวันนี้: ${total.toFixed(1)} / ${d.target} g`;
+            document.getElementById('summary').innerText = `รวมวันที่เลือก: ${total.toFixed(1)} / ${d.target} g`;
+
+            const sevenDaysDiv = document.getElementById('last7Days');
+            let html = '';
+            for (let i = 0; i < 7; i++) {
+                const dObj = new Date(); dObj.setDate(dObj.getDate() - i);
+                const dStr = dObj.toISOString().split('T')[0];
+                const dailyTotal = d.records.filter(r => r.date === dStr).reduce((sum, r) => sum + parseFloat(r.protein), 0);
+                html += `<div class="flex justify-between"><span>${dStr}</span><span>${dailyTotal.toFixed(1)}g</span></div>`;
+            }
+            sevenDaysDiv.innerHTML = html;
         }
 
         document.getElementById('dateInput').onchange = fetchData;
