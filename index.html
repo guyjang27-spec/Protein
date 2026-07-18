@@ -106,16 +106,27 @@
             fetchData();
         };
 
+        // ฟังก์ชันใหม่ที่อัปเดตแล้ว: บันทึกทั้ง 2 Sheet
         document.getElementById('addDbBtn').onclick = async () => {
             const name = document.getElementById('newFoodName').value;
             const weight = parseFloat(document.getElementById('newWeight').value);
             const protein = parseFloat(document.getElementById('newProtein').value);
             const p100 = (protein * 100) / weight;
+            
             await fetch(URL, {
                 method: "POST",
-                body: JSON.stringify({ action: 'add_to_db', foodName: name, proteinPer100: p100 })
+                body: JSON.stringify({ 
+                    action: 'add_to_db', 
+                    foodName: name, 
+                    weight: weight,
+                    protein: protein,
+                    proteinPer100: p100 
+                })
             });
-            alert("เพิ่มอาหารใหม่ลง DB เรียบร้อย!");
+            alert("เพิ่มอาหารใหม่สำเร็จ! (บันทึกประวัติและอัปเดตฐานข้อมูลแล้ว)");
+            document.getElementById('newFoodName').value = '';
+            document.getElementById('newWeight').value = '';
+            document.getElementById('newProtein').value = '';
             fetchData();
         };
 
