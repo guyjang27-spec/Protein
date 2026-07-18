@@ -13,7 +13,6 @@
             <ul id="suggestionList" class="absolute z-50 w-full bg-white border shadow-lg hidden max-h-48 overflow-y-auto"></ul>
         </div>
 
-        <!-- เพิ่มช่องแสดงโปรตีนต่อ 100g -->
         <input type="number" id="proteinPer100" placeholder="โปรตีนต่อ 100g (g)" class="w-full border p-2 rounded bg-gray-100" readonly>
         
         <div class="grid grid-cols-2 gap-2">
@@ -29,6 +28,16 @@
         
         <h2 class="font-bold border-b mt-4">📅 ย้อนหลัง 7 วัน</h2>
         <div id="last7Days" class="text-sm space-y-1 text-gray-600"></div>
+
+        <div class="mt-8 p-4 bg-gray-100 rounded-xl">
+            <h3 class="font-bold text-gray-700">➕ เพิ่มอาหารใหม่ลง DB</h3>
+            <input type="text" id="newFoodName" placeholder="ชื่ออาหาร" class="w-full border p-2 mt-2 rounded">
+            <div class="grid grid-cols-2 gap-2 mt-2">
+                <input type="number" id="newWeight" placeholder="ปริมาณอ้างอิง (g)" class="border p-2 rounded">
+                <input type="number" id="newProtein" placeholder="โปรตีนที่ได้ (g)" class="border p-2 rounded">
+            </div>
+            <button id="addDbBtn" class="w-full bg-purple-500 text-white py-2 mt-2 rounded font-bold">บันทึกลง DB</button>
+        </div>
     </div>
 
     <script>
@@ -84,19 +93,35 @@
             if(p100 && weight) document.getElementById('proteinInput').value = ((p100 * weight) / 100).toFixed(1);
         };
 
+        document.getElementById('saveBtn').onclick = async () => {
+            const payload = {
+                date: document.getElementById('dateInput').value,
+                foodName: document.getElementById('foodInput').value,
+                weight: document.getElementById('weightInput').value,
+                protein: document.getElementById('proteinInput').value,
+                unit: 'g'
+            };
+            await fetch(URL, { method: "POST", body: JSON.stringify(payload) });
+            alert("บันทึกรายการเรียบร้อย!");
+            fetchData();
+        };
+
+        document.getElementById('addDbBtn').onclick = async () => {
+            const name = document.getElementById('newFoodName').value;
+            const weight = parseFloat(document.getElementById('newWeight').value);
+            const protein = parseFloat(document.getElementById('newProtein').value);
+            const p100 = (protein * 100) / weight;
+            await fetch(URL, {
+                method: "POST",
+                body: JSON.stringify({ action: 'add_to_db', foodName: name, proteinPer100: p100 })
+            });
+            alert("เพิ่มอาหารใหม่ลง DB เรียบร้อย!");
+            fetchData();
+        };
+
         document.getElementById('dateInput').valueAsDate = new Date();
         document.getElementById('dateInput').onchange = fetchData;
         fetchData();
     </script>
-    <!-- ส่วนที่หายไป -->
-        <div class="mt-8 p-4 bg-gray-100 rounded-xl">
-            <h3 class="font-bold text-gray-700">➕ เพิ่มอาหารใหม่ลง DB</h3>
-            <input type="text" id="newFoodName" placeholder="ชื่ออาหาร" class="w-full border p-2 mt-2 rounded">
-            <div class="grid grid-cols-2 gap-2 mt-2">
-                <input type="number" id="newWeight" placeholder="ปริมาณอ้างอิง (g)" class="border p-2 rounded">
-                <input type="number" id="newProtein" placeholder="โปรตีนที่ได้ (g)" class="border p-2 rounded">
-            </div>
-            <button id="addDbBtn" class="w-full bg-purple-500 text-white py-2 mt-2 rounded font-bold">บันทึกลง DB</button>
-        </div>
 </body>
 </html>
