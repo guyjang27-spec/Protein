@@ -46,17 +46,37 @@
             try {
                 const res = await fetch(URL);
                 const d = await res.json();
-                proteinDB = d.db; // เก็บฐานข้อมูลไว้ในตัวแปรนี้
-                // ... (แสดงผลรายการตามปกติ)
+                proteinDB = d.db;
+                
                 const selectedDate = document.getElementById('dateInput').value;
+                
+                // 1. กรองและแสดงรายการวันนี้
                 const history = d.records.filter(r => String(r.date).trim() === selectedDate);
                 document.getElementById('historyList').innerHTML = history.map(r => 
                     `<div class="flex justify-between border-b py-1"><span>${r.foodName}</span><span>+${parseFloat(r.protein || 0).toFixed(1)}g</span></div>`
                 ).join('');
-                fetchDataUI(d);
+                
+                const total = history.reduce((sum, r) => sum + parseFloat(r.protein || 0), 0);
+                document.getElementById('summary').innerText = `รวมวันนี้: ${total.toFixed(1)} g`;
+
+                // 2. แสดงรายการย้อนหลัง 7 วัน (ตรงนี้ครับที่ต้องเรียกใช้)
+                let html = '';
+                for (let i = 0; i < 7; i++) {
+                    const dObj = new Date(); 
+                    dObj.setDate(dObj.getDate() - i); 
+                    const dStr = dObj.toISOString().split('T')[0];
+                    
+                    // รวมโปรตีนรายวัน
+                    const dailyTotal = d.records
+                        .filter(r => String(r.date).trim() === dStr)
+                        .reduce((sum, r) => sum + parseFloat(r.protein || 0), 0);
+                        
+                    html += `<div class="flex justify-between py-1 border-b text-gray-700"><span>${dStr}</span><span>${dailyTotal.toFixed(1)}g</span></div>`;
+                }
+                document.getElementById('last7Days').innerHTML = html;
+
             } catch (err) { console.error("Error:", err); }
         }
-
         // --- ระบบ Autocomplete ใหม่ ---
         document.getElementById('foodInput').oninput = function() {
             const val = this.value.toLowerCase();
