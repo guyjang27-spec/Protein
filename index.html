@@ -1,60 +1,40 @@
 <!DOCTYPE html>
 <html lang="th">
-<head>
-    <meta charset="UTF-8">
-    <title>AI Protein Tracker</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
 <body class="bg-gray-50 p-4 flex justify-center">
-    <div class="w-full max-w-md bg-white rounded-2xl shadow-lg p-6 space-y-4">
+    <div class="w-full max-w-md bg-white p-6 rounded-2xl shadow-lg space-y-4">
         <h1 class="text-xl font-bold text-center">🥩 AI Protein Tracker</h1>
-        
         <input type="date" id="dateInput" class="w-full border p-2 rounded">
-        <div class="grid grid-cols-2 gap-2 text-center">
-            <div class="border p-2 rounded bg-gray-100 font-bold" id="targetDisplay">140</div>
-            <div class="border p-2 rounded bg-blue-50 font-bold text-blue-600" id="remainingDisplay">140 g</div>
-        </div>
-
+        
         <input type="text" id="foodInput" placeholder="ชื่ออาหาร" class="w-full border p-2 rounded">
-        
-        <div class="flex items-center gap-2"><input type="checkbox" id="manualToggle"> <label class="text-sm">ระบุโปรตีนเอง</label></div>
-        
-        <div id="calcSection" class="flex gap-2">
+        <div class="flex gap-2">
             <input type="number" id="weightInput" placeholder="ปริมาณ" class="w-full border p-2 rounded">
-            <select id="unitInput" class="border p-2 rounded"><option value="g">g</option><option value="ml">ml</option></select>
-            <button id="calcBtn" class="bg-blue-500 text-white px-4 py-2 rounded">AI</button>
+            <input type="number" id="proteinInput" placeholder="โปรตีน (g)" class="w-full border p-2 rounded font-bold text-blue-600">
+            <button id="aiBtn" class="bg-blue-500 text-white px-4 rounded">AI</button>
         </div>
-        <div id="manualSection" class="hidden"><input type="number" id="manualProtein" placeholder="ระบุโปรตีน (g)" class="w-full border p-2 rounded"></div>
         
         <button id="saveBtn" class="w-full bg-green-500 text-white py-3 rounded-xl font-bold">💾 บันทึก</button>
-
         <h2 class="font-bold border-b mt-4">📋 รายการวันนี้</h2>
-        <div id="historyList" class="text-sm space-y-1"></div>
-        <h2 class="font-bold border-b mt-4">📊 สรุปยอดรวม</h2>
-        <div id="summaryDisplay" class="font-bold text-lg"></div>
+        <div id="historyList" class="text-sm"></div>
+        <div id="summary" class="font-bold mt-2"></div>
     </div>
 
     <script>
         const URL = "https://script.google.com/macros/s/AKfycbzAax5FyBhIuy8HmaEjxRALlMEuTeWTHT3ROcIKGqsmBOwRcsJYTgT1fmqVRHK-eoop7A/exec";
         document.getElementById('dateInput').valueAsDate = new Date();
 
-        document.getElementById('manualToggle').onchange = (e) => {
-            document.getElementById('manualSection').classList.toggle('hidden', !e.target.checked);
-            document.getElementById('calcSection').classList.toggle('hidden', e.target.checked);
-        };
-
-        document.getElementById('calcBtn').onclick = async () => {
+        // AI วิเคราะห์แล้วใส่ค่าในช่องโปรตีน
+        document.getElementById('aiBtn').onclick = async () => {
             const res = await fetch(`${URL}?action=ai&food=${document.getElementById('foodInput').value}&weight=${document.getElementById('weightInput').value}`);
-            const p = await res.json();
-            document.getElementById('manualToggle').checked = true;
-            document.getElementById('manualSection').classList.remove('hidden');
-            document.getElementById('calcSection').classList.add('hidden');
-            document.getElementById('manualProtein').value = p;
+            document.getElementById('proteinInput').value = await res.json();
         };
 
         document.getElementById('saveBtn').onclick = async () => {
-            const data = { date: document.getElementById('dateInput').value, foodName: document.getElementById('foodInput').value, protein: document.getElementById('manualProtein').value, unit: document.getElementById('unitInput').value };
-            await fetch(URL, { method: "POST", body: JSON.stringify(data) });
+            await fetch(URL, { method: "POST", body: JSON.stringify({ 
+                date: document.getElementById('dateInput').value,
+                foodName: document.getElementById('foodInput').value,
+                weight: document.getElementById('weightInput').value,
+                protein: document.getElementById('proteinInput').value 
+            })});
             fetchData();
         };
 
@@ -65,8 +45,7 @@
             const history = d.records.filter(r => r.date === dateVal);
             document.getElementById('historyList').innerHTML = history.map(r => `<div class="flex justify-between"><span>${r.foodName}</span><span>+${r.protein}g</span></div>`).join('');
             const total = history.reduce((sum, r) => sum + parseFloat(r.protein), 0);
-            document.getElementById('remainingDisplay').innerText = (d.targetValue - total).toFixed(1) + " g";
-            document.getElementById('summaryDisplay').innerText = `รวมวันนี้: ${total.toFixed(1)} g / ${d.targetValue} g`;
+            document.getElementById('summary').innerText = `รวมวันนี้: ${total.toFixed(1)} / ${d.target} g`;
         }
 
         document.getElementById('dateInput').onchange = fetchData;
