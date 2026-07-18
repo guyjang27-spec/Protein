@@ -37,20 +37,28 @@
         </div>
     </div>
 
-    <script>
+   <script>
         const URL = "https://script.google.com/macros/s/AKfycbzAax5FyBhIuy8HmaEjxRALlMEuTeWTHT3ROcIKGqsmBOwRcsJYTgT1fmqVRHK-eoop7A/exec";
         let proteinDB = [];
 
         async function fetchData() {
             try {
                 const res = await fetch(URL);
-                if (!res.ok) throw new Error("ไม่สามารถเชื่อมต่อ Google Sheet ได้");
                 const d = await res.json();
+                
+                // --- เพิ่มบรรทัดนี้ไว้เช็ค ---
+                console.log("ข้อมูลที่ได้รับจาก Google:", d);
+                // --------------------------
+                
                 proteinDB = d.db;
                 
-                const selectedDate = document.getElementById('dateInput').value;
-                const history = d.records.filter(r => r.date === selectedDate);
+                const selectedDate = document.getElementById('dateInput').value; // วันที่ใน input
+                console.log("วันที่เลือก:", selectedDate);
                 
+                // กรองข้อมูล: ถ้าวันที่ตรงกัน
+                const history = d.records.filter(r => String(r.date).trim() === String(selectedDate).trim());
+                console.log("รายการที่กรองได้:", history);
+
                 document.getElementById('historyList').innerHTML = history.map(r => 
                     `<div class="flex justify-between border-b py-1"><span>${r.foodName}</span><span>+${parseFloat(r.protein || 0).toFixed(1)}g</span></div>`
                 ).join('');
@@ -58,38 +66,26 @@
                 const total = history.reduce((sum, r) => sum + parseFloat(r.protein || 0), 0);
                 document.getElementById('summary').innerText = `รวมวันนี้: ${total.toFixed(1)} g`;
 
-                let html = '';
-                for (let i = 0; i < 7; i++) {
-                    const dObj = new Date(); dObj.setDate(dObj.getDate() - i); 
-                    const dStr = dObj.toISOString().split('T')[0];
-                    const dailyTotal = d.records.filter(r => r.date === dStr).reduce((sum, r) => sum + parseFloat(r.protein || 0), 0);
-                    html += `<div class="flex justify-between py-1 border-b"><span>${dStr}</span><span>${dailyTotal.toFixed(1)}g</span></div>`;
-                }
-                document.getElementById('last7Days').innerHTML = html;
+                // ... (ส่วนที่เหลือคงเดิม)
+                fetchDataUI(d);
             } catch (err) {
-                console.error(err);
-                alert("เกิดข้อผิดพลาดในการโหลดข้อมูล: " + err.message);
+                console.error("Error:", err);
             }
         }
 
-        // ตั้งค่าวันที่เริ่มต้นเป็นวันนี้
+        function fetchDataUI(d) {
+            let html = '';
+            for (let i = 0; i < 7; i++) {
+                const dObj = new Date(); dObj.setDate(dObj.getDate() - i); 
+                const dStr = dObj.toISOString().split('T')[0];
+                const dailyTotal = d.records.filter(r => String(r.date).trim() === dStr).reduce((sum, r) => sum + parseFloat(r.protein || 0), 0);
+                html += `<div class="flex justify-between py-1 border-b"><span>${dStr}</span><span>${dailyTotal.toFixed(1)}g</span></div>`;
+            }
+            document.getElementById('last7Days').innerHTML = html;
+        }
+
         document.getElementById('dateInput').valueAsDate = new Date();
-        
-        // ผูกฟังก์ชันเข้ากับปุ่มและ Event
-        document.getElementById('calcBtn').onclick = () => {
-            const item = proteinDB.find(i => i.name === document.getElementById('foodInput').value);
-            if(item) document.getElementById('proteinInput').value = ((item.value * document.getElementById('weightInput').value)/100).toFixed(1);
-            else alert("ไม่พบอาหารนี้ในฐานข้อมูล กรุณาพิมพ์ให้ตรงหรือเพิ่มข้อมูลใหม่");
-        };
-
-        document.getElementById('saveBtn').onclick = async () => {
-            await fetch(URL, { method: "POST", body: JSON.stringify({ date: document.getElementById('dateInput').value, foodName: document.getElementById('foodInput').value, weight: document.getElementById('weightInput').value, protein: document.getElementById('proteinInput').value, unit: 'g' }) });
-            fetchData();
-        };
-
         document.getElementById('dateInput').onchange = fetchData;
-        
-        // รันครั้งแรก
         fetchData();
     </script>
 </body>
