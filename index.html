@@ -11,7 +11,7 @@
         
         <input type="date" id="dateInput" class="w-full border p-2 rounded bg-gray-50">
         
-        <!-- ส่วนเป้าหมายและยอดคงเหลือ (ที่หายไปเอากลับมาแล้ว) -->
+        <!-- ส่วนเป้าหมายและยอดคงเหลือ -->
         <div class="grid grid-cols-2 gap-2 text-center">
             <div>
                 <label class="text-xs text-gray-500 font-bold">เป้าหมายวันนี้ (g)</label>
@@ -68,7 +68,6 @@
             btn.disabled = true;
 
             try {
-                // เพิ่ม redirect: 'follow' ป้องกัน CORS Error จาก Google Script
                 const res = await fetch(`${URL}?action=ai&food=${encodeURIComponent(food)}&weight=${encodeURIComponent(weight + unit)}`, { redirect: "follow" });
                 const data = await res.json();
                 
@@ -100,7 +99,7 @@
                 weight: document.getElementById('weightInput').value,
                 unit: document.getElementById('unitInput').value,
                 protein: proteinVal,
-                target: document.getElementById('targetInput').value // ส่งเป้าหมายไปบันทึกด้วย
+                target: document.getElementById('targetInput').value
             })});
             
             // ล้างค่าเดิมหลังบันทึก
@@ -143,7 +142,6 @@
             document.getElementById('last7Days').innerHTML = html;
         }
 
-        // โหลดข้อมูลใหม่เมื่อเปลี่ยนวันที่หรือเป้าหมาย
         document.getElementById('dateInput').onchange = fetchData;
         document.getElementById('targetInput').onchange = fetchData;
         fetchData();
