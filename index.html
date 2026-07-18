@@ -7,23 +7,24 @@
 </head>
 <body class="bg-gray-50 p-4 flex justify-center">
     <div class="w-full max-w-md bg-white p-6 rounded-2xl shadow-lg space-y-4">
-        <h1 class="text-xl font-bold text-center">🥩 AI Protein Tracker</h1>
-        <input type="date" id="dateInput" class="w-full border p-2 rounded">
+        <h1 class="text-xl font-bold text-center text-blue-600">🥩 AI Protein Tracker</h1>
         
-        <input type="text" id="foodInput" placeholder="ชื่ออาหาร" class="w-full border p-2 rounded">
+        <input type="date" id="dateInput" class="w-full border p-2 rounded bg-gray-50">
+        
+        <input type="text" id="foodInput" placeholder="ชื่ออาหาร" class="w-full border p-2 rounded bg-gray-50">
         <div class="flex gap-2">
-            <input type="number" id="weightInput" placeholder="ปริมาณ" class="w-full border p-2 rounded">
-            <input type="number" id="proteinInput" placeholder="โปรตีน (g)" class="w-full border p-2 rounded font-bold text-blue-600">
-            <button id="aiBtn" class="bg-blue-500 text-white px-4 rounded">AI</button>
+            <input type="number" id="weightInput" placeholder="ปริมาณ (g)" class="w-full border p-2 rounded bg-gray-50">
+            <input type="number" id="proteinInput" placeholder="โปรตีน (g)" class="w-full border p-2 rounded font-bold text-blue-600 bg-gray-50">
+            <button id="aiBtn" class="bg-blue-500 text-white px-4 rounded hover:bg-blue-600">AI</button>
         </div>
         
-        <button id="saveBtn" class="w-full bg-green-500 text-white py-3 rounded-xl font-bold">💾 บันทึก</button>
+        <button id="saveBtn" class="w-full bg-green-500 text-white py-3 rounded-xl font-bold hover:bg-green-600">💾 บันทึก</button>
 
-        <h2 class="font-bold border-b mt-4">📋 รายการวันที่เลือก</h2>
-        <div id="historyList" class="text-sm"></div>
-        <div id="summary" class="font-bold text-blue-700"></div>
+        <h2 class="font-bold border-b mt-4 text-gray-700">📋 รายการวันที่เลือก</h2>
+        <div id="historyList" class="text-sm space-y-1"></div>
+        <div id="summary" class="font-bold text-blue-700 mt-2"></div>
 
-        <h2 class="font-bold border-b mt-4">📅 สรุปโปรตีนย้อนหลัง 7 วัน</h2>
+        <h2 class="font-bold border-b mt-4 text-gray-700">📅 สรุปโปรตีนย้อนหลัง 7 วัน</h2>
         <div id="last7Days" class="text-sm space-y-1 text-gray-600"></div>
     </div>
 
@@ -33,12 +34,12 @@
 
         document.getElementById('aiBtn').onclick = async () => {
             const btn = document.getElementById('aiBtn');
-            btn.innerText = "⏳..."; btn.disabled = true; btn.classList.replace('bg-blue-500', 'bg-gray-400');
+            btn.innerText = "⏳..."; btn.disabled = true;
             try {
                 const res = await fetch(`${URL}?action=ai&food=${document.getElementById('foodInput').value}&weight=${document.getElementById('weightInput').value}`);
                 document.getElementById('proteinInput').value = await res.json();
             } catch (err) { alert("เกิดข้อผิดพลาด"); } finally {
-                btn.innerText = "AI"; btn.disabled = false; btn.classList.replace('bg-gray-400', 'bg-blue-500');
+                btn.innerText = "AI"; btn.disabled = false;
             }
         };
 
