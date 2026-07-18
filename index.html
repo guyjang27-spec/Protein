@@ -42,46 +42,44 @@
         let proteinDB = [];
 
         async function fetchData() {
-            const res = await fetch(URL);
-            const d = await res.json();
-            proteinDB = d.db;
-            const selectedDate = document.getElementById('dateInput').value;
-            
-            // แสดงรายการวันนี้
-            const history = d.records.filter(r => r.date === selectedDate);
-            document.getElementById('historyList').innerHTML = history.map(r => 
-                `<div class="flex justify-between border-b py-1"><span>${r.foodName}</span><span>+${parseFloat(r.protein).toFixed(1)}g</span></div>`
-            ).join('');
-            const total = history.reduce((sum, r) => sum + parseFloat(r.protein || 0), 0);
-            document.getElementById('summary').innerText = `รวมวันนี้: ${total.toFixed(1)} g`;
+            try {
+                const res = await fetch(URL);
+                if (!res.ok) throw new Error("ไม่สามารถเชื่อมต่อ Google Sheet ได้");
+                const d = await res.json();
+                proteinDB = d.db;
+                
+                const selectedDate = document.getElementById('dateInput').value;
+                const history = d.records.filter(r => r.date === selectedDate);
+                
+                document.getElementById('historyList').innerHTML = history.map(r => 
+                    `<div class="flex justify-between border-b py-1"><span>${r.foodName}</span><span>+${parseFloat(r.protein || 0).toFixed(1)}g</span></div>`
+                ).join('');
+                
+                const total = history.reduce((sum, r) => sum + parseFloat(r.protein || 0), 0);
+                document.getElementById('summary').innerText = `รวมวันนี้: ${total.toFixed(1)} g`;
 
-            // แสดงย้อนหลัง 7 วัน
-            let html = '';
-            for (let i = 0; i < 7; i++) {
-                const dObj = new Date(); dObj.setDate(dObj.getDate() - i); 
-                const dStr = dObj.toISOString().split('T')[0];
-                const dailyTotal = d.records.filter(r => r.date === dStr).reduce((sum, r) => sum + parseFloat(r.protein || 0), 0);
-                html += `<div class="flex justify-between py-1 border-b"><span>${dStr}</span><span>${dailyTotal.toFixed(1)}g</span></div>`;
+                let html = '';
+                for (let i = 0; i < 7; i++) {
+                    const dObj = new Date(); dObj.setDate(dObj.getDate() - i); 
+                    const dStr = dObj.toISOString().split('T')[0];
+                    const dailyTotal = d.records.filter(r => r.date === dStr).reduce((sum, r) => sum + parseFloat(r.protein || 0), 0);
+                    html += `<div class="flex justify-between py-1 border-b"><span>${dStr}</span><span>${dailyTotal.toFixed(1)}g</span></div>`;
+                }
+                document.getElementById('last7Days').innerHTML = html;
+            } catch (err) {
+                console.error(err);
+                alert("เกิดข้อผิดพลาดในการโหลดข้อมูล: " + err.message);
             }
-            document.getElementById('last7Days').innerHTML = html;
         }
 
-        document.getElementById('foodInput').addEventListener('input', function() {
-            const list = document.getElementById('suggestionList');
-            const matches = proteinDB.filter(i => i.name.includes(this.value));
-            list.innerHTML = matches.map(i => `<li class="p-2 border-b cursor-pointer hover:bg-blue-100" onclick="selectFood('${i.name}')">${i.name}</li>`).join('');
-            list.classList.toggle('hidden', matches.length === 0);
-        });
-
-        function selectFood(name) {
-            document.getElementById('foodInput').value = name;
-            document.getElementById('suggestionList').classList.add('hidden');
-        }
-
+        // ตั้งค่าวันที่เริ่มต้นเป็นวันนี้
+        document.getElementById('dateInput').valueAsDate = new Date();
+        
+        // ผูกฟังก์ชันเข้ากับปุ่มและ Event
         document.getElementById('calcBtn').onclick = () => {
             const item = proteinDB.find(i => i.name === document.getElementById('foodInput').value);
             if(item) document.getElementById('proteinInput').value = ((item.value * document.getElementById('weightInput').value)/100).toFixed(1);
-            else alert("ไม่พบอาหารนี้ เลือกจากรายการที่เด้งขึ้นมานะครับ");
+            else alert("ไม่พบอาหารนี้ในฐานข้อมูล กรุณาพิมพ์ให้ตรงหรือเพิ่มข้อมูลใหม่");
         };
 
         document.getElementById('saveBtn').onclick = async () => {
@@ -89,14 +87,9 @@
             fetchData();
         };
 
-        document.getElementById('addDbBtn').onclick = async () => {
-            const pPer100 = (parseFloat(document.getElementById('newProtein').value) * 100) / parseFloat(document.getElementById('newWeight').value);
-            await fetch(URL, { method: "POST", body: JSON.stringify({ action: 'add_to_db', foodName: document.getElementById('newFoodName').value, proteinPer100: pPer100.toFixed(1) }) });
-            location.reload();
-        };
-
-        document.getElementById('dateInput').valueAsDate = new Date();
         document.getElementById('dateInput').onchange = fetchData;
+        
+        // รันครั้งแรก
         fetchData();
     </script>
 </body>
