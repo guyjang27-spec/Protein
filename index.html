@@ -88,5 +88,15 @@
         document.getElementById('dateInput').onchange = fetchData;
         fetchData();
     </script>
+    <!-- ส่วนที่หายไป -->
+        <div class="mt-8 p-4 bg-gray-100 rounded-xl">
+            <h3 class="font-bold text-gray-700">➕ เพิ่มอาหารใหม่ลง DB</h3>
+            <input type="text" id="newFoodName" placeholder="ชื่ออาหาร" class="w-full border p-2 mt-2 rounded">
+            <div class="grid grid-cols-2 gap-2 mt-2">
+                <input type="number" id="newWeight" placeholder="ปริมาณอ้างอิง (g)" class="border p-2 rounded">
+                <input type="number" id="newProtein" placeholder="โปรตีนที่ได้ (g)" class="border p-2 rounded">
+            </div>
+            <button id="addDbBtn" class="w-full bg-purple-500 text-white py-2 mt-2 rounded font-bold">บันทึกลง DB</button>
+        </div>
 </body>
 </html>
