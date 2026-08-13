@@ -90,9 +90,10 @@ if (remaining > 20) {
     document.getElementById('remainingDisplay').className = "font-bold text-blue-600 mt-1";
     document.getElementById('remainingDisplay').innerText = `เหลืออีก ${Math.abs(remaining).toFixed(1)} g จะถึงเกณฑ์สูงสุด`;
 } else {
-    // ตั้งแต่ -11 ลงไป (เกินเป้าหมายและเกินเกณฑ์สูงสุดแล้ว)
+    // ตั้งแต่ -11 ลงไป (เกินเกณฑ์สูงสุดแล้ว โดยนับจาก -11 เป็นส่วนที่เกิน 1 g เป็นต้นไป)
+    const excess = Math.abs(remaining) - 10;
     document.getElementById('remainingDisplay').className = "font-bold text-purple-600 mt-1";
-    document.getElementById('remainingDisplay').innerText = `กินเกินเป้าหมายไปแล้ว: ${Math.abs(remaining).toFixed(1)} g`;
+    document.getElementById('remainingDisplay').innerText = `กินเกินเกณฑ์สูงสุดไปแล้ว: ${excess.toFixed(1)} g`;
 }
                 let html = '';
                 for (let i = 0; i < 7; i++) {
