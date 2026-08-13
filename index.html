@@ -86,7 +86,7 @@ if (remaining > 20) {
     // แก้ไขตรงนี้: เช่น remaining เป็น -2 จะเอา 10 - 2 = 8 g
     const toMax = 10 + remaining; // หรือ 10 - Math.abs(remaining)
     document.getElementById('remainingDisplay').className = "font-bold text-blue-600 mt-1";
-    document.getElementById('remainingDisplay').innerText = `เหลืออีก ${toMax.toFixed(1)} g จะถึงเกณฑ์สูงสุด`;
+    document.getElementById('remainingDisplay').innerText = `กินครบเป้าหมายแล้ว! เหลืออีก ${toMax.toFixed(1)} g จะถึงเกณฑ์สูงสุด`;
 } else {
     // ตั้งแต่ -11 ลงไป
     const excess = Math.abs(remaining) - 10;
