@@ -77,9 +77,8 @@ if (remaining > 20) {
     document.getElementById('remainingDisplay').innerText = `โปรตีนที่ต้องกินเพิ่ม: ${remaining.toFixed(1)} g`;
 } else if (remaining > 0 && remaining <= 20) {
     // แก้ไขตรงนี้: สมมติฐานว่าช่วงยืดหยุ่นคือ 20 g (ถ้าเหลือ 5 จะแสดงผลว่ากินได้อีก 15 g ถึงเป้าหมาย)
-    const canEatMore = 20 - remaining;
     document.getElementById('remainingDisplay').className = "font-bold text-yellow-600 mt-1";
-    document.getElementById('remainingDisplay').innerText = `กินถึงเกณฑ์ขั้นต่ำแล้ว แต่ยังกินได้อีก ${canEatMore.toFixed(1)} g จะถึงเป้าหมาย`;
+    document.getElementById('remainingDisplay').innerText = `กินถึงเกณฑ์ขั้นต่ำแล้ว แต่ยังกินได้อีก ${remaining.toFixed(1)} g จะถึงเป้าหมาย`;
 } else if (remaining === 0) {
     document.getElementById('remainingDisplay').className = "font-bold text-green-600 mt-1";
     document.getElementById('remainingDisplay').innerText = `กินครบเป้าหมายแล้ว!`;
