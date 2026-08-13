@@ -73,24 +73,23 @@
                 document.getElementById('targetDisplay').innerText = `เป้าหมายต่อวัน: ${target} g`;
     // แทนที่บรรทัดเดิมด้วยโค้ดนี้ครับ
 if (remaining > 20) {
-    // กรณีเหลือมากกว่า 20 (ยังห่างจากเป้าหมายพอสมควร)
     document.getElementById('remainingDisplay').className = "font-bold text-red-500 mt-1";
     document.getElementById('remainingDisplay').innerText = `โปรตีนที่ต้องกินเพิ่ม: ${remaining.toFixed(1)} g`;
 } else if (remaining > 0 && remaining <= 20) {
-    // กรณีเหลือ 1 ถึง 20 (ถึงเกณฑ์ขั้นต่ำแล้ว แต่ยังกินเพิ่มได้อีก)
+    // แก้ไขตรงนี้: สมมติฐานว่าช่วงยืดหยุ่นคือ 20 g (ถ้าเหลือ 5 จะแสดงผลว่ากินได้อีก 15 g ถึงเป้าหมาย)
+    const canEatMore = 20 - remaining;
     document.getElementById('remainingDisplay').className = "font-bold text-yellow-600 mt-1";
-    document.getElementById('remainingDisplay').innerText = `กินถึงเกณฑ์ขั้นต่ำแล้ว แต่ยังกินได้อีก ${remaining.toFixed(1)} g`;
+    document.getElementById('remainingDisplay').innerText = `กินถึงเกณฑ์ขั้นต่ำแล้ว แต่ยังกินได้อีก ${canEatMore.toFixed(1)} g จะถึงเป้าหมาย`;
 } else if (remaining === 0) {
-    // กรณีพอดีเป๊ะ
     document.getElementById('remainingDisplay').className = "font-bold text-green-600 mt-1";
     document.getElementById('remainingDisplay').innerText = `กินครบเป้าหมายแล้ว!`;
 } else if (remaining >= -10 && remaining < 0) {
-    // กรณีเกินมา -1 ถึง -10 (เหลืออีก xx จะถึงเกณฑ์สูงสุด)
-    // หมายเหตุ: ใช้ Math.abs(remaining) เพื่อให้แสดงค่าเป็นบวกสวยๆ
+    // แก้ไขตรงนี้: เช่น remaining เป็น -2 จะเอา 10 - 2 = 8 g
+    const toMax = 10 + remaining; // หรือ 10 - Math.abs(remaining)
     document.getElementById('remainingDisplay').className = "font-bold text-blue-600 mt-1";
-    document.getElementById('remainingDisplay').innerText = `เหลืออีก ${Math.abs(remaining).toFixed(1)} g จะถึงเกณฑ์สูงสุด`;
+    document.getElementById('remainingDisplay').innerText = `เหลืออีก ${toMax.toFixed(1)} g จะถึงเกณฑ์สูงสุด`;
 } else {
-    // ตั้งแต่ -11 ลงไป (เกินเกณฑ์สูงสุดแล้ว โดยนับจาก -11 เป็นส่วนที่เกิน 1 g เป็นต้นไป)
+    // ตั้งแต่ -11 ลงไป
     const excess = Math.abs(remaining) - 10;
     document.getElementById('remainingDisplay').className = "font-bold text-purple-600 mt-1";
     document.getElementById('remainingDisplay').innerText = `กินเกินเกณฑ์สูงสุดไปแล้ว: ${excess.toFixed(1)} g`;
